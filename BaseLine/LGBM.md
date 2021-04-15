@@ -135,13 +135,55 @@ enc.fit(train.loc[: , object_col])
 train_onehot_df = pd.DataFrame(enc.transform(train.loc[: , object_col]).toarray() , 
                                columns = enc.get_feature_names(object_col))
 train.drop(object_col , axis=1 , inplace= True)
+train = pd.concat([train , train_onehot_df] , axis = 1)
 ```
 
 one hot encoding 단하나의 값만 true이고 나머지느 모두 false로 만든다. Encode를 생성후 fit& transform 함수를 호출한다 fit메소드를 
 호출 할때 분류에 사용되는 클래스들을 식별하고 메타를 기록해둔다. transform함수를 호출할 때 One-Hot 인코딩된 결과를 리턴란다. 만약 fit
 호출과정에서 보지 못한 컬럼이 transform호출시 나타나면 오류메세지를 발생 시킨다.
 
-따라서 train_onehot_df에는 인코딩한 값들이 새로운 데이터 프레임에 들어가게되고 데이터 타입이 object였던 컬럼들은 drop을 통해 삭제 해준다.
+따라서 train_onehot_df에는 인코딩한 값들이 새로운 데이터 프레임에 들어가게되고 데이터 타입이 object였던 컬럼들은 drop을 통해 삭제 해준다. 삭제해준 컬럼대신에 one-hot-encoding한 dataframe을 concat해준다. 
+
+```
+enc.fit(test.loc[: , object_col])
+test_onehot_df = pd.DataFrame(enc.transform(test.loc[: , object_col]).toarray() , 
+                              columns = enc.get_feature_names(object_col))
+test = test.drop(object_col , axis =1 , inplace=True)
+test = pd.concat([test,  test_onehot_df] , axis = 1)
+```
+
+test데이터도 마찬가지이다 objecr value를 가지는 컬럼들을 삭제하고 encoding된 daafarame으로 합해 준다.
+
+
+```
+skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)#교차검증을 위한 전처리
+folds=[]
+for train_idx, valid_idx in skf.split(train, train['credit']):
+    folds.append((train_idx, valid_idx))
+```
+stratifiedKFold 라는 메소드를 찾아보면 F-Folds cross-validator을 찾을 수 있다 설명으로는 train/test 데이터를 나누어 제공한다는 것인데 여기서 n_splits는 number of folds 이다 최소 2 이상이 되어야하는데 데이터를 n만큼 구분한후 교차로 검증방식을 통해 학습률을 높인다. n값의 폴드세트에 n번의 학습과 검증을 준다. 
+
+한번의 학습을 통해 평가 할 경우 과적합이 일어날 가능성이 있으므로 교차 검증을 통해 과적합을 막아준다.
+
+
+```
+random.seed(42)
+lgb_models={}
+for fold in range(5):
+    print(f'===================================={fold+1}============================================')
+    train_idx, valid_idx = folds[fold]
+    X_train, X_valid, y_train, y_valid = train.drop(['credit'],axis=1).iloc[train_idx].values, train.drop(['credit'],axis=1).iloc[valid_idx].values,\
+                                         train['credit'][train_idx].values, train['credit'][valid_idx].values 
+    lgb = LGBMClassifier(n_estimators=1000)
+    lgb.fit(X_train, y_train, 
+            eval_set=[(X_train, y_train), (X_valid, y_valid)], 
+            early_stopping_rounds=30,
+           verbose=100)
+    lgb_models[fold]=lgb
+    print(f'================================================================================\n\n')
+  ```
+  학습을 하는 코드이다 .LGMBclassifer을 두고 학습을 해준다. 이떄 파라미터 튜닝을 해주면 학습률이 더욱 높아질 것이다.
+  
 
 
 
