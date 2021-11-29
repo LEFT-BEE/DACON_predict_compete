@@ -4,8 +4,7 @@ title: lgbm을 이용한 예측 알고리즘
 
 #### 개요
 
-Dacon code 공유에 있는 baseline code를 리뷰해보록 한다. 본 알고리즘은 아래에 있는 코드를 그대로 가져온 것이다. https://dacon.io/competitions/official/235713/codeshare/2476?page=2&dtype=recent
-아직 부족한 데이터프레임에 대한 이해와 다양한 데이터를 통해 어떻게 정확한 예측값을 얻을 수 있는지 공부한다.
+.
 
 
 ```
